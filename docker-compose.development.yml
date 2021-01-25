@@ -1,0 +1,46 @@
+services:
+  backend: &backend
+    build:
+      context: ./
+      dockerfile: ./backend/Dockerfile.development
+    command:
+      - /price-scraper/backend/manage.py
+      - runserver
+      - 0.0.0.0:8000
+    env_file: ./.env
+    image: price-scraper/backend:development
+    ports:
+      - "8000:8000"
+      - "6800:6800"
+    tty: true
+    volumes:
+      - ./backend:/price-scraper/backend
+      - ./celery/celery.sh:/price-scraper/celery.sh
+
+  task-queue:
+    <<: *backend
+    command:
+      - /price-scraper/celery.sh
+    ports: []
+    env_file: ./.env
+    tty: false
+  broker:
+    image: rabbitmq:3
+    env_file:
+      - ./.env
+  db:
+    image: mysql:latest
+    env_file:
+      - ./.env
+    cap_add:
+      - SYS_NICE
+    ports:
+      - "3306:3306"
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --federated
+      --log-timestamps=SYSTEM
+    volumes:
+      - ./db:/var/lib/mysql
+
+version: "3.3"

@@ -1,0 +1,42 @@
+FROM python:3.9.0-buster
+
+ENV PYTHONUNBUFFERED=1
+
+ENV PIP_NO_VERSION_CHECK=1
+ENV PIP_NO_CACHE_DIR=1
+
+ENV DJANGO_SETTINGS_MODULE=price_scraper.settings.development
+
+ENV TZ=Europe/Kiev
+
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add - && \
+    curl https://packages.microsoft.com/config/debian/10/prod.list -o /etc/apt/sources.list.d/mssql-release.list && \
+    apt-get update && \
+    ACCEPT_EULA=Y apt-get --assume-yes --no-install-recommends install \
+    msodbcsql17=17.6.1.1-1 && \
+    apt-get --assume-yes --no-install-recommends install \
+    graphviz=2.40.1-6 \
+    libgraphviz-dev=2.40.1-6 \
+    apache2-dev=2.4.38-3+deb10u4 \
+    libldap2-dev=2.4.47+dfsg-3+deb10u4 \
+    libsasl2-dev=2.1.27+dfsg-1+deb10u1 \
+    unixodbc-dev=2.3.7 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /price-scraper/backend
+
+ENV VIRTUAL_ENV=/price-scraper/python
+RUN python -m venv $VIRTUAL_ENV --prompt price-scraper
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+RUN pip install --upgrade \
+    pip==20.3.3 \
+    setuptools==50.3.0 \
+    wheel==0.35.1
+
+COPY ./backend/requirements.txt ./
+RUN pip install \
+    --requirement ./requirements.txt
+WORKDIR /price-scraper/backend
+

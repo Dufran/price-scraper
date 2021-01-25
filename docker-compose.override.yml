@@ -1,0 +1,9 @@
+services:
+  service:
+    build:
+      context: ./
+      args:
+        - SECRET_KEY
+    image: price-scraper
+
+version: "3.3"

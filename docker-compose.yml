@@ -1,0 +1,25 @@
+networks:
+  default:
+  reverse-proxy:
+    external: true
+
+services:
+  service: &service
+    command:
+      - /price-scraper/apache.sh
+    env_file: ./.env
+    networks:
+      default:
+      reverse-proxy:
+        aliases:
+          - price-scraper
+    image: price-scraper
+  task-queue:
+    <<: *service
+    command:
+      - ../celery.sh
+    networks:
+      default:
+      reverse-proxy:
+
+version: "3.3"
